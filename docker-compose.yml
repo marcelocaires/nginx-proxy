@@ -1,0 +1,14 @@
+# docker-compose.yml
+services:
+  nginx-proxy:
+    image: nginx:latest
+    container_name: nginx-reverse-proxy
+    ports:
+      - "80:80" # Expõe a porta 80 do contêiner para a porta 80 da sua máquina local
+    volumes:
+      # Monta seu arquivo de configuração local dentro do contêiner Nginx
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    # Adiciona a configuração para acessar o host (necessário para 'host.docker.internal')
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
