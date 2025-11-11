@@ -39,8 +39,8 @@ services:
 #
   # --- 2. Aplicação Front-end (App) ---
   app:
-    image: cbkt-app-cbkt:latest # Substitua pela imagem real
-    container_name: app
+    image: cbkt-app:latest # Substitua pela imagem real
+    container_name: cbkt-app
     # Expõe a porta para teste interno, se necessário
     # ports:
     #   - "4000:4000" 
@@ -57,7 +57,7 @@ services:
 
 networks:
   web:
-    external: false # ou false se você quiser criar a rede automaticamente
+    external: true # ou false se você quiser criar a rede automaticamente
 
 volumes:
   traefik_data:
