@@ -57,7 +57,7 @@ services:
 
 networks:
   web:
-    external: true # ou false se você quiser criar a rede automaticamente
+    external: false # ou false se você quiser criar a rede automaticamente
 
 volumes:
   traefik_data:
