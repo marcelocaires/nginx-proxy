@@ -40,7 +40,7 @@ services:
   # --- 2. Aplicação Front-end (App) ---
   app:
     image: cbkt-app:latest # Substitua pela imagem real
-    container_name: cbkt-app
+    container_name: cbkt-app-proxy
     # Expõe a porta para teste interno, se necessário
     # ports:
     #   - "4000:4000" 
