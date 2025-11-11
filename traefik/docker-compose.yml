@@ -36,7 +36,7 @@ services:
     
     networks:
       - web
-
+#
   # --- 2. Aplicação Front-end (App) ---
   app:
     image: cbkt-app:latest # Substitua pela imagem real
@@ -54,48 +54,6 @@ services:
       - "traefik.http.routers.app.tls.certresolver=letsencrypt"
       # Serviço de destino
       - "traefik.http.services.app.loadbalancer.server.port=4000"
-
-  # --- 3. API de Autenticação (api-auth) ---
-  api-auth:
-    image: cbkt-api-auth:latest # Substitua pela imagem real
-    container_name: cbkt-api-auth
-    # ports:
-    #   - "8080:8080"
-    networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      # Router para o prefixo /api/auth/
-      - "traefik.http.routers.auth.rule=Host(`cbkt.mmc.dev.br`) && PathPrefix(`/api/auth`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
-      # Remove o prefixo /api/auth/ antes de enviar para o backend (API)
-      - "traefik.http.middlewares.auth-stripprefix.stripprefix.prefixes=/api/auth"
-      # Aplica o middleware de remoção de prefixo
-      - "traefik.http.routers.auth.middlewares=auth-stripprefix@docker"
-      # Serviço de destino
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
-
-  # --- 4. API de Cadastro (api-cadastro) ---
-  api-cadastro:
-    image: cbkt-api-cadastro:latest # Substitua pela imagem real
-    container_name: cbkt-api-cadastro
-    # ports:
-    #   - "8081:8081"
-    networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      # Router para o prefixo /api/cadastro/
-      - "traefik.http.routers.cadastro.rule=Host(`cbkt.mmc.dev.br`) && PathPrefix(`/api/cadastro`)"
-      - "traefik.http.routers.cadastro.entrypoints=websecure"
-      - "traefik.http.routers.cadastro.tls.certresolver=letsencrypt"
-      # Remove o prefixo /api/cadastro/
-      - "traefik.http.middlewares.cadastro-stripprefix.stripprefix.prefixes=/api/cadastro"
-      # Aplica o middleware de remoção de prefixo
-      - "traefik.http.routers.cadastro.middlewares=cadastro-stripprefix@docker"
-      # Serviço de destino
-      - "traefik.http.services.cadastro.loadbalancer.server.port=8081"
 
 networks:
   web:
