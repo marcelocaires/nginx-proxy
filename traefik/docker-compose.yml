@@ -39,7 +39,7 @@ services:
 
   # --- 2. Aplicação Front-end (App) ---
   app:
-    image: sua-imagem-do-app:latest # Substitua pela imagem real
+    image: cbkt-app:latest # Substitua pela imagem real
     container_name: cbkt-app
     # Expõe a porta para teste interno, se necessário
     # ports:
@@ -57,7 +57,7 @@ services:
 
   # --- 3. API de Autenticação (api-auth) ---
   api-auth:
-    image: sua-imagem-do-auth-api:latest # Substitua pela imagem real
+    image: cbkt-api-auth:latest # Substitua pela imagem real
     container_name: cbkt-api-auth
     # ports:
     #   - "8080:8080"
@@ -78,7 +78,7 @@ services:
 
   # --- 4. API de Cadastro (api-cadastro) ---
   api-cadastro:
-    image: sua-imagem-do-cadastro-api:latest # Substitua pela imagem real
+    image: cbkt-api-cadastro:latest # Substitua pela imagem real
     container_name: cbkt-api-cadastro
     # ports:
     #   - "8081:8081"
