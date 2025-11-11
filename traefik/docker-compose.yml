@@ -1,0 +1,105 @@
+services:
+  # --- 1. Serviço Traefik (Proxy Reverso) ---
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik_proxy
+    command:
+      # Habilita o provedor Docker (monitora labels)
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false # Ignora contêineres sem labels
+      
+      # Configura o ponto de entrada WebSecure (HTTPS) na porta 443
+      - --entrypoints.websecure.address=:443
+
+      # Configura o ponto de entrada Web (HTTP) na porta 80 (mantido para o Certbot)
+      - --entrypoints.web.address=:80
+      
+      # Configuração para Certificados (Let's Encrypt - ACME)
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true # Usa TLS-ALPN-01 (Porta 443)
+      - --certificatesresolvers.letsencrypt.acme.email=seu-email@dominio.com
+      # Armazena os certificados em um volume
+      - --certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme.json 
+
+    ports:
+      - "80:80"    # Para o desafio de Let's Encrypt (opcional, pode usar TLS-ALPN-01)
+      - "443:443"  # Porta HTTPS principal
+
+    volumes:
+      # Mapeia um volume para o Certbot salvar certificados
+      - traefik_data:/etc/traefik
+      # Mapeia o socket do Docker para Traefik monitorar contêineres
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+
+    labels:
+      # O Traefik não precisa ser roteado para si mesmo
+      - "traefik.enable=false"
+    
+    networks:
+      - web
+
+  # --- 2. Aplicação Front-end (App) ---
+  app:
+    image: sua-imagem-do-app:latest # Substitua pela imagem real
+    container_name: cbkt-app
+    # Expõe a porta para teste interno, se necessário
+    # ports:
+    #   - "4000:4000" 
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Router para a rota raiz (/)
+      - "traefik.http.routers.app.rule=Host(`cbkt.mmc.dev.br`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      # Serviço de destino
+      - "traefik.http.services.app.loadbalancer.server.port=4000"
+
+  # --- 3. API de Autenticação (api-auth) ---
+  api-auth:
+    image: sua-imagem-do-auth-api:latest # Substitua pela imagem real
+    container_name: cbkt-api-auth
+    # ports:
+    #   - "8080:8080"
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Router para o prefixo /api/auth/
+      - "traefik.http.routers.auth.rule=Host(`cbkt.mmc.dev.br`) && PathPrefix(`/api/auth`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      # Remove o prefixo /api/auth/ antes de enviar para o backend (API)
+      - "traefik.http.middlewares.auth-stripprefix.stripprefix.prefixes=/api/auth"
+      # Aplica o middleware de remoção de prefixo
+      - "traefik.http.routers.auth.middlewares=auth-stripprefix@docker"
+      # Serviço de destino
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+
+  # --- 4. API de Cadastro (api-cadastro) ---
+  api-cadastro:
+    image: sua-imagem-do-cadastro-api:latest # Substitua pela imagem real
+    container_name: cbkt-api-cadastro
+    # ports:
+    #   - "8081:8081"
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Router para o prefixo /api/cadastro/
+      - "traefik.http.routers.cadastro.rule=Host(`cbkt.mmc.dev.br`) && PathPrefix(`/api/cadastro`)"
+      - "traefik.http.routers.cadastro.entrypoints=websecure"
+      - "traefik.http.routers.cadastro.tls.certresolver=letsencrypt"
+      # Remove o prefixo /api/cadastro/
+      - "traefik.http.middlewares.cadastro-stripprefix.stripprefix.prefixes=/api/cadastro"
+      # Aplica o middleware de remoção de prefixo
+      - "traefik.http.routers.cadastro.middlewares=cadastro-stripprefix@docker"
+      # Serviço de destino
+      - "traefik.http.services.cadastro.loadbalancer.server.port=8081"
+
+networks:
+  web:
+    external: true # ou false se você quiser criar a rede automaticamente
+
+volumes:
+  traefik_data:
