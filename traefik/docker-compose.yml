@@ -1,63 +1,46 @@
+# traefik.yml
+version: '3.8'
+
 services:
-  # --- 1. Serviço Traefik (Proxy Reverso) ---
   traefik:
     image: traefik:v2.10
     container_name: traefik_proxy
+    restart: always
+    
     command:
-      # Habilita o provedor Docker (monitora labels)
+      # --- Configuração Geral ---
       - --providers.docker=true
-      - --providers.docker.exposedbydefault=false # Ignora contêineres sem labels
+      - --providers.docker.exposedbydefault=false # Apenas contêineres com label 'traefik.enable=true' serão roteados
       
-      # Configura o ponto de entrada WebSecure (HTTPS) na porta 443
-      - --entrypoints.websecure.address=:443
-
-      # Configura o ponto de entrada Web (HTTP) na porta 80 (mantido para o Certbot)
-      - --entrypoints.web.address=:80
+      # --- Entrypoints (Portas de Entrada) ---
+      - --entrypoints.web.address=:80        
+      - --entrypoints.websecure.address=:443  
       
-      # Configuração para Certificados (Let's Encrypt - ACME)
-      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true # Usa TLS-ALPN-01 (Porta 443)
-      - --certificatesresolvers.letsencrypt.acme.email=seu-email@dominio.com
-      # Armazena os certificados em um volume
+      # --- Configuração do Certificados (Let's Encrypt - ACME) ---
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true # Usa desafio TLS-ALPN-01 (na porta 443)
+      - --certificatesresolvers.letsencrypt.acme.email=seu-email@dominio.com # *** MUDAR ESTE EMAIL! ***
       - --certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme.json 
 
     ports:
-      - "80:80"    # Para o desafio de Let's Encrypt (opcional, pode usar TLS-ALPN-01)
-      - "443:443"  # Porta HTTPS principal
+      - "80:80"    
+      - "443:443"  
 
     volumes:
-      # Mapeia um volume para o Certbot salvar certificados
-      - traefik_data:/etc/traefik
-      # Mapeia o socket do Docker para Traefik monitorar contêineres
+      # Volume para persistência dos certificados (dados do Certbot)
+      - traefik_data:/etc/traefik 
+      # Monta o socket do Docker para Traefik monitorar os labels
       - /var/run/docker.sock:/var/run/docker.sock:ro 
 
     labels:
-      # O Traefik não precisa ser roteado para si mesmo
+      # O Traefik não precisa de roteamento para si mesmo
       - "traefik.enable=false"
     
     networks:
       - web
-#
-  # --- 2. Aplicação Front-end (App) ---
-  app:
-    image: cbkt-app:latest # Substitua pela imagem real
-    container_name: cbkt-app-proxy
-    # Expõe a porta para teste interno, se necessário
-    # ports:
-    #   - "4000:4000" 
-    networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      # Router para a rota raiz (/)
-      - "traefik.http.routers.app.rule=Host(`cbkt.mmc.dev.br`)"
-      - "traefik.http.routers.app.entrypoints=websecure"
-      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
-      # Serviço de destino
-      - "traefik.http.services.app.loadbalancer.server.port=4000"
 
 networks:
   web:
-    external: true # ou false se você quiser criar a rede automaticamente
-
+    external: true # Conecta-se à rede 'web' que você criou
+    
 volumes:
   traefik_data:
