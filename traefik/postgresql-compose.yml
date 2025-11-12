@@ -1,0 +1,26 @@
+# Trecho do aplicacao.yml
+
+services:
+  # ... (Serviços app, api-auth, api-cadastro, etc.)
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: unless-stopped
+    
+    # Variáveis de ambiente
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    
+    # NOVO: Mapeamento da porta para acesso do Host (DBeaver)
+    ports:
+      - "5432:5432" # Host_Porta:Container_Porta
+      
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      
+    networks:
+      - web
